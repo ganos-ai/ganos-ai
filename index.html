@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genos AI - Enterprise Intelligence Platform</title>
+    <style>
+        :root {
+            --bg-color: #131314;
+            --sidebar-bg: #1e1f20;
+            --chat-bg: #131314;
+            --input-bg: #1e1f20;
+            --text-color: #e3e3e3;
+            --text-secondary: #c4c7c5;
+            --accent-color: #38bdf8;
+            --border-color: #333537;
+            --user-bubble: #282a2c;
+            --ai-bubble: #131314;
+        }
+        body {
+            font-family: 'Google Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Modal Autentikasi Perusahaan */
+        #authModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .auth-card {
+            background-color: #1e1f20;
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 420px;
+            box-sizing: border-box;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            text-align: center;
+        }
+        .auth-logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #131314;
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+        .auth-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 8px; color: var(--text-color); }
+        .auth-subtitle { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.4; }
+        .auth-input {
+            width: 100%; background-color: #131314; border: 1px solid var(--border-color);
+            padding: 12px 16px; border-radius: 12px; color: var(--text-color); font-size: 0.95rem;
+            margin-bottom: 15px; box-sizing: border-box; outline: none;
+        }
+        .auth-input:focus { border-color: var(--accent-color); }
+        .auth-btn {
+            width: 100%; background-color: var(--accent-color); color: #131314; border: none;
+            padding: 12px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer;
+        }
+        .auth-btn:hover { opacity: 0.85; }
+        .auth-links { margin-top: 20px; font-size: 0.85rem; color: var(--text-secondary); }
+        .auth-links span { color: var(--accent-color); cursor: pointer; font-weight: 500; }
+
+        /* Tata Letak Utama */
+        #appContainer { width: 100vw; height: 100vh; display: flex; }
+        sidebar {
+            width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; transition: transform 0.3s ease; z-index: 10;
+        }
+        sidebar.hidden { transform: translateX(-260px); position: absolute; height: 100%; }
+        .sidebar-header { padding: 15px; display: flex; align-items: center; gap: 12px; }
+        .menu-btn { background: none; border: none; color: var(--text-color); font-size: 1.2rem; cursor: pointer; padding: 8px; border-radius: 50%; }
+        .menu-btn:hover { background-color: rgba(255, 255, 255, 0.08); }
+        .company-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: var(--text-color); }
+        .company-logo {
+            width: 28px; height: 28px; background: linear-gradient(135deg, #38bdf8, #818cf8);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #131314; font-weight: bold; font-size: 0.9rem;
+        }
+        .new-chat-btn {
+            margin: 10px 15px; background-color: #282a2c; color: var(--text-color); border: 1px solid var(--border-color);
+            padding: 10px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; text-align: left; display: flex; align-items: center; gap: 10px;
+        }
+        .new-chat-btn:hover { background-color: #333537; }
+        .history-section { flex: 1; overflow-y: auto; padding: 15px; }
+        .history-title { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 10px; font-weight: 500; }
+        .history-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .history-item:hover { background-color: rgba(255, 255, 255, 0.05); }
+        .user-profile-section { padding: 15px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); }
+        .logout-btn { background: none; border: none; color: #f87171; cursor: pointer; font-size: 0.85rem; }
+
+        .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; }
+        top-bar { padding: 15px 20px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem; font-weight: 500; color: var(--text-secondary); }
+        .chat-container {
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 25px;
+            max-width: 800px; width: 100%; margin: 0 auto; box-sizing: border-box;
+        }
+        .message-row { display: flex; gap: 15px; max-width: 100%; }
+        .message-row.user { justify-content: flex-end; }
+        .avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #38bdf8, #818cf8);
+            display: flex; align-items: center; justify-content: center; font-weight: bold; color: #131314; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .user .avatar { background: #444746; color: white; order: 2; }
+        .message-content {
+            padding: 12px 18px; border-radius: 16px; line-height: 1.6; word-wrap: break-word; max-width: 75%; font-size: 0.95rem; white-space: pre-wrap;
+        }
+        .user .message-content { background-color: var(--user-bubble); color: var(--text-color); border-bottom-right-radius: 4px; }
+        .ai .message-content { background-color: var(--ai-bubble); color: var(--text-color); }
+        
+        /* Format Blok Koding */
+        code { background-color: #1e1f20; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; color: #38bdf8; }
+        pre code { display: block; padding: 15px; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; margin-top: 10px; background-color: #0b0b0c; }
+
+        .input-area { padding: 20px; max-width: 800px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+        .input-box {
+            background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 28px;
+            display: flex; align-items: center; padding: 8px 15px; gap: 10px;
+        }
+        .input-box input { flex: 1; background: none; border: none; color: var(--text-color); font-size: 1rem; padding: 10px; outline: none; }
+        .send-btn {
+            background-color: var(--accent-color); color: #131314; border: none; width: 36px; height: 36px;
+            border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;
+        }
+        .send-btn:hover { opacity: 0.85; }
+        .welcome-title { font-size: 2.2rem; font-weight: 600; background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+        .welcome-subtitle { color: var(--text-secondary); font-size: 1.4rem; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+
+    <!-- Modal Autentikasi -->
+    <div id="authModal">
+        <div class="auth-card">
+            <div class="auth-logo">G</div>
+            <div class="auth-title" id="modalTitle">Masuk ke Genos AI</div>
+            <div class="auth-subtitle" id="modalSub">Batas uji coba tamu tercapai. Masuk untuk melanjutkan akses tanpa batas.</div>
+            <input type="email" id="authEmail" class="auth-input" placeholder="Alamat Email..." />
+            <input type="password" id="authPassword" class="auth-input" placeholder="Kata Sandi..." />
+            <button class="auth-btn" id="authActionBtn" onclick="processAuth()">Masuk</button>
+            <div class="auth-links">
+                <div><span id="toggleAuthModeText" onclick="switchAuthMode()">Belum punya akun? Daftar gratis</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Antarmuka Utama -->
+    <div id="appContainer">
+        <sidebar id="sidebar">
+            <div class="sidebar-header">
+                <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+                <div class="company-brand">
+                    <div class="company-logo">G</div>
+                    <span>Genos AI</span>
+                </div>
+            </div>
+            <button class="new-chat-btn" onclick="newChat()"><span>+</span> Percakapan Baru</button>
+            <div class="history-section">
+                <div class="history-title">Riwayat Sesi</div>
+                <div id="historyList">
+                    <div class="history-item">Pengembangan Sistem & Koding</div>
+                </div>
+            </div>
+            <div class="user-profile-section">
+                <span id="displayEmail" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">Tamu (Guest)</span>
+                <button class="logout-btn" onclick="handleLogout()">Keluar</button>
+            </div>
+        </sidebar>
+
+        <div class="main-container">
+            <top-bar>
+                <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+                <span style="color: var(--accent-color); font-weight: bold;">Genos AI</span> • Super Intelligence Core
+            </top-bar>
+
+            <div class="chat-container" id="chatContainer">
+                <div id="welcomeScreen" style="margin-top: auto; margin-bottom: auto; text-align: center;">
+                    <div class="welcome-title">Halo, Selamat Datang</div>
+                    <div class="welcome-subtitle">Tanyakan apa saja atau minta saya menuliskan kode pemrograman untukmu!</div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-box">
+                    <input type="text" id="userInput" placeholder="Tanyakan strategi, analisis, atau minta buatkan koding..." onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" onclick="sendMessage()">&#9658;</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let guestQueryCount = parseInt(localStorage.getItem('genos_guest_count') || '0');
+        let isUserLoggedIn = localStorage.getItem('genos_logged_email');
+        let currentAuthMode = 'login';
+
+        window.onload = function() {
+            if (isUserLoggedIn) {
+                document.getElementById('displayEmail').textContent = isUserLoggedIn;
+            }
+        }
+
+        function checkAuthRequirement() {
+            if (!isUserLoggedIn) {
+                guestQueryCount++;
+                localStorage.setItem('genos_guest_count', guestQueryCount);
+                if (guestQueryCount > 3) {
+                    showAuthModal('login');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function showAuthModal(mode) {
+            currentAuthMode = mode;
+            const modal = document.getElementById('authModal');
+            const title = document.getElementById('modalTitle');
+            const sub = document.getElementById('modalSub');
+            const btn = document.getElementById('authActionBtn');
+            const toggle = document.getElementById('toggleAuthModeText');
+
+            if (mode === 'login') {
+                title.textContent = "Masuk ke Genos AI";
+                sub.textContent = "Batas uji coba tercapai. Masuk menggunakan akun Anda.";
+                btn.textContent = "Masuk";
+                toggle.textContent = "Belum punya akun? Daftar gratis";
+            } else {
+                title.textContent = "Daftar Akun Genos AI";
+                sub.textContent = "Buat akun baru untuk menikmati akses tanpa batas.";
+                btn.textContent = "Daftar Akun";
+                toggle.textContent = "Sudah punya akun? Masuk di sini";
+            }
+            modal.style.display = 'flex';
+        }
+
+        function switchAuthMode() {
+            if (currentAuthMode === 'login') { showAuthModal('register'); } 
+            else { showAuthModal('login'); }
+        }
+
+        function processAuth() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            if (!email || !password) { alert("Isi email dan kata sandi!"); return; }
+
+            if (currentAuthMode === 'register') {
+                if (localStorage.getItem('genos_user_' + email)) { alert("Email sudah terdaftar!"); return; }
+                localStorage.setItem('genos_user_' + email, password);
+                alert("Pendaftaran berhasil! Silakan masuk.");
+                switchAuthMode();
+            } else {
+                const storedPass = localStorage.getItem('genos_user_' + email);
+                if (storedPass && storedPass !== password) { alert("Kata sandi salah!"); return; }
+                localStorage.setItem('genos_logged_email', email);
+                isUserLoggedIn = email;
+                document.getElementById('displayEmail').textContent = email;
+                document.getElementById('authModal').style.display = 'none';
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('genos_logged_email');
+            localStorage.removeItem('genos_guest_count');
+            location.reload();
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
+
+        function newChat() {
+            document.getElementById('chatContainer').innerHTML = `
+                <div id="welcomeScreen" style="margin-top: auto; margin-bottom: auto; text-align: center;">
+                    <div class="welcome-title">Halo, Selamat Datang</div>
+                    <div class="welcome-subtitle">Tanyakan apa saja atau minta saya menuliskan kode pemrograman untukmu!</div>
+                </div>
+            `;
+        }
+
+        async function sendMessage() {
+            if (!checkAuthRequirement()) return;
+
+            const inputField = document.getElementById('userInput');
+            const chatContainer = document.getElementById('chatContainer');
+            const userText = inputField.value.trim();
+            if (!userText) return;
+
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            if (welcomeScreen) welcomeScreen.remove();
+
+            const userRow = document.createElement('div');
+            userRow.className = 'message-row user';
+            userRow.innerHTML = `<div class="message-content">${escapeHtml(userText)}</div><div class="avatar">U</div>`;
+            chatContainer.appendChild(userRow);
+            inputField.value = '';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            const aiRow = document.createElement('div');
+            aiRow.className = 'message-row ai';
+            aiRow.innerHTML = `<div class="avatar">G</div><div class="message-content">Genos sedang berpikir...</div>`;
+            chatContainer.appendChild(aiRow);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            const aiContentDiv = aiRow.querySelector('.message-content');
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: userText })
+                });
+
+                const data = await response.json();
+                if (data.reply) {
+                    aiContentDiv.innerHTML = formatMarkdown(data.reply);
+                } else {
+                    aiContentDiv.textContent = "Error: " + (data.error || "Gagal memproses.");
+                }
+            } catch (err) {
+                aiContentDiv.textContent = "Terjadi kendala koneksi ke server peladen AI.";
+            }
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function handleKeyPress(event) { if (event.key === 'Enter') sendMessage(); }
+        function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+        function formatMarkdown(text) {
+            let escaped = escapeHtml(text);
+            escaped = escaped.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+            return escaped;
+        }
+    </script>
+</body>
+</html>
