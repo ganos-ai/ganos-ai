@@ -11,11 +11,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'GEMINI_API_KEY belum dikonfigurasi di panel Vercel.' });
-    }
-
+    // Menggunakan kunci API yang sudah terpasang
+    const apiKey = "AQ.Ab8RN6LX-BYIgPP1w_suq939P-qutJZQPg6fD57JR7sV9-f0sQ";
+    
     const ai = new GoogleGenAI({ apiKey: apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
